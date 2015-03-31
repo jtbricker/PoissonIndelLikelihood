@@ -1,59 +1,72 @@
 #!usr/bin/python
 
-
 from collections import namedtuple
 from sys import stdout
 
-Node = namedtuple('Node', 'data, left, right')
-tree = Node(1,
-            Node(2,
-                 Node(4,
-                      Node(7, None, None),
-                      None),
-                 Node(5, None, None)),
-            Node(3,
-                 Node(6,
-                      Node(8, None, None),
-                      Node(9, None, None)),
-                 None))
+Node = namedtuple('Node', 'name, dist, arr, left, right')
+
+leaf_probs = {'A':[1,0,0,0],'T':[0,1,0,0],'C':[0,0,1,0], 'G':[0,0,0,1]}
+def_arr = [-1,-1,-1,-1]
+
+tree = Node('O',None,def_arr,
+            Node('N',20,def_arr,
+                 Node('M',30,def_arr,
+                      Node('A',50,leaf_probs['A'],None,None),
+                      Node('I',55, def_arr,
+                           Node('B',60,leaf_probs['A'],None,None),
+                           Node('C',65,leaf_probs['A'],None,None)
+                           )
+                      ),
+                 Node('J',35,def_arr,
+                      Node('D',45,leaf_probs['T'],None,None),
+                      Node('E',40,leaf_probs['C'],None,None)
+                      )
+                 ),
+            Node('L',70,def_arr,
+                 Node('K',80,def_arr,
+                      Node('F',85,leaf_probs['C'],None,None),
+                      Node('G',90,leaf_probs['G'],None,None)
+                      ),
+                 Node('H',75,leaf_probs['G'],None,None)
+                 )
+            )
+
+tree2 = Node('5',None,def_arr,
+                Node('4',15,def_arr,
+                     Node('1',5,leaf_probs['A'],None,None),
+                     Node('2',10,leaf_probs['T'],None,None)
+                     ),
+                Node('3',20,leaf_probs['C'],None,None)
+            )
 
 def printwithspace(i):
-    stdout.write("%i " % i)
-
-def preorder(node, visitor = printwithspace):
-    if node is not None:
-        preorder(node.left, visitor)
-        preorder(node.right, visitor)
-        visitor(node.data)
+    stdout.write("%s " %i)
 
 
-def inorder(node, visitor = printwithspace):
-    if node is not None:
-        inorder(node.left, visitor)
-        visitor(node.data)
-        inorder(node.right, visitor)
+        
+        return likelihood(node)
 
-def postorder(node, visitor = printwithspace):
-    if node is not None:
-        postorder(node.left, visitor)
-        postorder(node.right, visitor)
-        visitor(node.data)
+def likelihood(node):
+    if node.left == None and node.right == None:
+        return node
+    else:
+        for i in range(4):
+            left = 0
+            right = 0
+            for j in range(4):
+                left += substitution_prob(i,j,node.left.dist)*node.left.arr[j]
+                right += substitution_prob(i,j,node.right.dist)*node.right.arr[j]
+            node.arr[i] = left*right
+        return node
 
-def levelorder(node, more=None, visitor = printwithspace):
-    if node is not None:
-        if more is None:
-            more = []
-        more += [node.left, node.right]
-        visitor(node.data)
-    if more:
-        levelorder(more[0], more[1:], visitor)
+def substitution_prob(i,j,t):
+    if i == j: #no net substitution
+        return 1
+    elif i+j == 3: #transition (assuming A=0, T=1, C=2, G=3
+        return -t
+    else: #transversion
+        return t
 
-stdout.write('  preorder: ')
-preorder(tree)
-stdout.write('\n   inorder: ')
-inorder(tree)
-stdout.write('\n postorder: ')
-postorder(tree)
-stdout.write('\nlevelorder: ')
-levelorder(tree)
-stdout.write('\n')
+preorder(tree2)
+print tree2
+
