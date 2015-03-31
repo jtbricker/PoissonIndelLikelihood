@@ -1,63 +1,62 @@
 #!usr/bin/python
 
-from collections import namedtuple
-from sys import stdout
-
-Node = namedtuple('Node', 'name, dist, arr, left, right')
-
-leaf_probs = {'A':[1,0,0,0],'T':[0,1,0,0],'C':[0,0,1,0], 'G':[0,0,0,1]}
-def_arr = [-1,-1,-1,-1]
-
-tree = Node('O',None,def_arr,
-            Node('N',20,def_arr,
-                 Node('M',30,def_arr,
-                      Node('A',50,leaf_probs['A'],None,None),
-                      Node('I',55, def_arr,
-                           Node('B',60,leaf_probs['A'],None,None),
-                           Node('C',65,leaf_probs['A'],None,None)
-                           )
-                      ),
-                 Node('J',35,def_arr,
-                      Node('D',45,leaf_probs['T'],None,None),
-                      Node('E',40,leaf_probs['C'],None,None)
-                      )
-                 ),
-            Node('L',70,def_arr,
-                 Node('K',80,def_arr,
-                      Node('F',85,leaf_probs['C'],None,None),
-                      Node('G',90,leaf_probs['G'],None,None)
-                      ),
-                 Node('H',75,leaf_probs['G'],None,None)
-                 )
-            )
-
-tree2 = Node('5',None,def_arr,
-                Node('4',15,def_arr,
-                     Node('1',5,leaf_probs['A'],None,None),
-                     Node('2',10,leaf_probs['T'],None,None)
-                     ),
-                Node('3',20,leaf_probs['C'],None,None)
-            )
-
-def printwithspace(i):
-    stdout.write("%s " %i)
-
-
+class Node:
+    def __init__(self, name, dist, nuc, left, right):
+        self.name = name
+        self.dist = dist
+        self.nuc = nuc
         
-        return likelihood(node)
+        def setupArr(self):
+            if self.nuc=='A':return [1,0,0,0]
+            elif self.nuc == 'T':return [0,1,0,0]
+            elif self.nuc == 'C':return [0,0,1,0]
+            elif self.nuc == 'G':return [0,0,0,1]
+            else: return [-1,-1,-1,-1]
+        
+        self.arr = setupArr(self)
+        self.left = left
+        self.right = right
+    def __str__(self, depth=0):
+            ret = ''
+            tabs = '                     '*depth
+            ret += tabs+'name: %s\n'%self.name+tabs+'branch length:%s\n'%self.dist+tabs+'nucleotide:%s\n'%self.nuc+tabs+'probs:%s'%self.arr+'\n'
+            if self.left != None:
+                ret += tabs +'Left:\n'+ self.left.__str__(depth+1)
+            if self.right != None:
+                ret += tabs+'Right:\n'+self.right.__str__(depth+1)
+            return ret
 
-def likelihood(node):
-    if node.left == None and node.right == None:
-        return node
-    else:
-        for i in range(4):
-            left = 0
-            right = 0
-            for j in range(4):
-                left += substitution_prob(i,j,node.left.dist)*node.left.arr[j]
-                right += substitution_prob(i,j,node.right.dist)*node.right.arr[j]
-            node.arr[i] = left*right
-        return node
+    def likelihood(self):
+        if self.left == None and self.right == None:
+            pass
+        else:
+            for i in range(4):
+                left = 0
+                right = 0
+                for j in range(4):
+                    left += substitution_prob(i,j,self.left.dist)*self.left.arr[j]
+                    right += substitution_prob(i,j,self.right.dist)*self.right.arr[j]
+                self.arr[i] = left*right
+
+
+
+
+
+
+tree2 = Node('5',None,'X',
+                Node('4',15,'X',
+                     Node('1',5,'A',None,None),
+                     Node('2',10,'T',None,None)
+                     ),
+                Node('3',20,'C',None,None)
+            )
+
+def preorder(node):
+    if node is not None:
+        preorder(node.left)
+        preorder(node.right)
+        node.likelihood()
+        print tree2
 
 def substitution_prob(i,j,t):
     if i == j: #no net substitution
@@ -68,5 +67,3 @@ def substitution_prob(i,j,t):
         return t
 
 preorder(tree2)
-print tree2
-
